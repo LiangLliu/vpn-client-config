@@ -1,181 +1,124 @@
 {
+  "log": {
+    "disabled": false,
+    "level": "info",
+    "timestamp": true
+  },
   "dns": {
-    "fakeip": {
-      "enabled": true,
-      "inet4_range": "198.18.0.0/15",
-      "inet6_range": "fc00::/18"
-    },
     "servers": [
       {
-        "tag": "google",
-        "address": "https://8.8.8.8/dns-query",
-        "detour": "proxy"
+        "tag": "cf",
+        "address": "https://1.1.1.1/dns-query"
       },
       {
-        "tag": "tx",
-        "address": "https://120.53.53.53/dns-query",
+        "tag": "local",
+        "address": "223.5.5.5",
         "detour": "direct"
       },
       {
-        "tag": "fakeip",
-        "address": "fakeip"
+        "tag": "block",
+        "address": "rcode://success"
       }
     ],
     "rules": [
       {
-        "outbound": "any",
-        "server": "tx",
+        "rule_set": "geosite-category-ads-all",
+        "server": "block",
         "disable_cache": true
       },
       {
-        "clash_mode": "Direct",
-        "server": "tx"
+        "outbound": "any",
+        "server": "local"
       },
       {
-        "query_type": [
-          "A",
-          "AAAA"
-        ],
-        "server": "fakeip",
-        "rewrite_ttl": 1
+        "rule_set": "geosite-cn",
+        "server": "local"
       }
     ],
-    "final": "google",
-    "independent_cache": true
+    "strategy": "ipv4_only"
   },
+  "inbounds": [
+    {
+      "type": "tun",
+      "address": "172.19.0.1/30",
+      "auto_route": true,
+      "strict_route": false,
+      "sniff": true
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "hysteria2",
+      "tag": "proxy",
+      "server": "Your IP",
+      "server_port": Your Port,
+      "up_mbps": 1000,
+      "down_mbps": 1000,
+      "password": "Your Password",
+      "tls": {
+        "enabled": true,
+        "server_name": "bing.com",
+        "insecure": true
+      }
+    },
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ],
   "route": {
     "rules": [
       {
-        "port": 53,
-        "outbound": "dns-out"
+        "action": "sniff"
+      },
+      {
+        "protocol": "dns",
+        "action": "hijack-dns"
       },
       {
         "ip_is_private": true,
         "outbound": "direct"
       },
       {
-        "clash_mode": "Direct",
-        "outbound": "direct"
-      },
-      {
-        "rule_set": "geolocation-!cn",
-        "outbound": "proxy"
-      },
-      {
         "rule_set": [
           "geoip-cn",
           "geosite-cn"
         ],
-        "outbound": "cn"
+        "outbound": "direct"
+      },
+      {
+        "rule_set": "geosite-category-ads-all",
+        "action": "reject"
       }
     ],
     "rule_set": [
       {
-        "tag": "geolocation-!cn",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/geolocation-!cn.srs",
-        "download_detour": "proxy"
-      },
-      {
         "tag": "geoip-cn",
         "type": "remote",
         "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/cn.srs",
+        "url": "https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/geoip-cn.srs",
         "download_detour": "proxy"
       },
       {
         "tag": "geosite-cn",
         "type": "remote",
         "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/cn.srs",
+        "url": "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-cn.srs",
         "download_detour": "proxy"
       },
       {
-        "tag": "microsoft",
+        "tag": "geosite-category-ads-all",
         "type": "remote",
         "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/sing/geo/geosite/microsoft.srs",
-        "download_detour": "proxy"
-      },
-      {
-        "tag": "cnki",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/sing/geo/geosite/cnki.srs",
-        "download_detour": "proxy"
-      },
-      {
-        "tag": "instagram",
-        "type": "remote",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/sing/geo/geosite/instagram.srs",
+        "url": "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-category-ads-all.srs",
         "download_detour": "proxy"
       }
     ],
-    "final": "proxy",
     "auto_detect_interface": true
   },
-  "outbounds": [
-    {
-      "tag": "proxy",
-      "type": "hysteria2",
-      "server": "Your IP",
-      "server_port": 80,
-      "up_mbps": 100,
-      "down_mbps": 500,
-      "password": "Your Password",
-      "tls": {
-        "enabled": true,
-        "server_name": "www.bing.com",
-        "insecure": true
-      }
-    },
-    {
-      "tag": "direct",
-      "type": "direct"
-    },
-    {
-      "tag": "dns-out",
-      "type": "dns"
-    },
-    {
-      "tag": "cn",
-      "type": "selector",
-      "outbounds": [
-        "direct"
-      ],
-      "default": "direct"
+  "experimental": {
+    "cache_file": {
+      "enabled": true
     }
-  ],
-  "inbounds": [
-    {
-      "type": "tun",
-      "address": [
-        "172.19.0.1/30",
-        "fdfe:dcba:9876::1/126"
-      ],
-      "stack": "system",
-      "auto_route": true,
-      "sniff": true,
-      "platform": {
-        "http_proxy": {
-          "enabled": true,
-          "server": "127.0.0.1",
-          "server_port": 7890
-        }
-      }
-    },
-    {
-      "type": "mixed",
-      "listen": "127.0.0.1",
-      "listen_port": 7890,
-      "sniff": true
-    }
-  ],
-  "log": {
-    "disabled": false,
-    "level": "info",
-    "timestamp": true
   }
 }
